@@ -1,7 +1,10 @@
 <?php
     include 'C:/xampp/htdocs/BookStoreManagement/class/Book.php';
+    require_once 'C:/xampp/htdocs/BookStoreManagement/class/Author.php';
     
     $db = new DBConnection();
+    $author = new Author();
+    $authors = $author->getAllAuthors();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,44 +58,27 @@
             <!-- Main Content -->
             <div class="col-md-10">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-book"></i> Book List
+                    <div class="card-header">
+                        <i class="fas fa-user"></i> Author List
+                        <button class="btn btn-success float-right" data-bs-toggle="modal" data-bs-target="#addAuthor"><i class="fa-solid fa-user-plus"></i> Add Author</button>
                     </div>
                     <div class="card-body">
                         <table class="table table-striped table-hover">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th width="5%">Book ID</th>
-                                    <th width="25%">Book Title</th>
-                                    <th width="20%">Author</th>
-                                    <th width="15%">Price</th>
-                                    <th width="15%">Quantity</th>
-                                    <th width="20%">Manage Book</th>
+                                    <th width="10%">Author ID</th>
+                                    <th width="70%">Name</th>
+                                    <th width="20%">Manage Author</th>
                                 </tr>
                             </thead>
-                            <tbody id="bookTableBody">
-                                <?php
-                                    $book = new Book();
-                                    $books = $book->getAllBooks();
-                                    foreach($books as $book):
-                                ?>
+                            <tbody>
+                                <?php foreach($authors as $author): ?>
                                 <tr>
-                                    <td><?php echo $book['bookId']; ?></td>
+                                    <td><?php echo $author['author_id']; ?></td>
+                                    <td><?php echo $author['name']; ?></td>
                                     <td>
-                                        <h4><?php echo $book['bookTitle'] ; ?></h4>
-                                    </td>
-                                    <td>
-                                        <h4><?php echo $book['author']?></h4>
-                                    </td>
-                                    <td>
-                                        <?php echo $book['price']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo $book['quantity_in_stock']; ?>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-primary btn-sm editBookBtn" data-bs-toggle="modal" data-bs-target="#editBook" id="<?php echo $book['bookId']; ?>"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                                        <button class="btn btn-danger btn-sm deleteButton" id= "<?php echo $book['bookId']; ?>"><i class="fa-solid fa-trash"></i> Delete</button>
+                                        <button class="btn btn-primary btn-sm editAuthorBtn" data-bs-toggle="modal" data-bs-target="#editAuthor" id="<?php echo $author['author_id']; ?>"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                                        <button class="btn btn-danger btn-sm deleteAuthorBtn" id="<?php echo $author['author_id']; ?>"><i class="fa-solid fa-trash"></i> Delete</button>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -287,6 +273,107 @@
                     });
                 } else {
                     alert('Please enter a Book ID');
+                }
+            });
+        });
+    </script>
+
+    <!-- Modal for adding a new author -->
+    <div class="modal fade" id="addAuthor" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Add New Author</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAuthorForm">
+                        <div class="form-group">
+                            <label for="authorName">Author Name</label>
+                            <input type="text" name="authorName" class="form-control" required placeholder="Enter author name">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="addAuthorBtn">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing author details -->
+    <div class="modal fade" id="editAuthor" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Author Details</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAuthorForm">
+                        <div class="form-group">
+                            <label for="authorName">Author Name</label>
+                            <input type="text" name="updateAuthorName" id="editAuthorName" class="form-control" required>
+                            <input type="hidden" name="authorId" id="authorId">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updateAuthorBtn">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('#addAuthorBtn').on('click', function() {
+                $.post('class/Author.php', $('form#addAuthorForm').serialize(), function(data) {
+                    var data = JSON.parse(data);
+                    if (data.type == 'success') {
+                        $('#addAuthor').modal('hide');
+                        location.reload();
+                    } else {
+                        console.error(data.message); // Log the error message
+                    }
+                });
+            });
+
+            $('.editAuthorBtn').on('click', function(e) {
+                $('#editAuthor').modal('show');
+                var editId = $(this).attr('id');
+                $.post('class/Author.php', {editId: editId}, function(data) {
+                    var data = JSON.parse(data);
+                    $('#editAuthorName').val(data.name);
+                    $('#authorId').val(data.author_id);
+                });
+            });
+
+            $('#updateAuthorBtn').on('click', function() {
+                $.post('class/Author.php', $('form#editAuthorForm').serialize(), function(data) {
+                    var data = JSON.parse(data);
+                    if (data.type == 'success') {
+                        $('#editAuthor').modal('hide');
+                        location.reload();
+                    } else {
+                        console.error(data.message); // Log the error message
+                    }
+                });
+            });
+
+            $('.deleteAuthorBtn').on('click', function(e) {
+                var confirmDelete = confirm('Are you sure you want to delete this author?');
+                if (confirmDelete) {
+                    $.post('class/Author.php', {deleteId: e.target.id}, function(data) {
+                        var data = JSON.parse(data);
+                        if (data.type == 'success') {
+                            location.reload();
+                        } else {
+                            console.error(data.message); // Log the error message
+                        }
+                    });
                 }
             });
         });
